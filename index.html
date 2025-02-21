@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polynomial Secret Sharing</title>
+</head>
+<body>
+    <h2>Polynomial Secret Sharing - Results</h2>
+    <div id="results"></div>
+
+    <script>
+        // Function to decode a value from a given base (base-encoded to integer)
+        function decodeValue(value, base) {
+            return parseInt(value, base);  // Convert encoded string value to integer based on the base
+        }
+
+        // Lagrange interpolation function to calculate the constant term f(0)
+        function lagrangeInterpolation(xValues, yValues) {
+            let n = xValues.length;
+            let result = 0;
+
+            // Lagrange interpolation formula
+            for (let i = 0; i < n; i++) {
+                let term = yValues[i];
+                for (let j = 0; j < n; j++) {
+                    if (i !== j) {
+                        term *= (0 - xValues[j]) / (xValues[i] - xValues[j]);
+                    }
+                }
+                result += term;
+            }
+
+            return Math.round(result); // Return the rounded value of constant term
+        }
+
+        // Function to process the test cases and compute the constant term
+        function processTestCases(testCases) {
+            const resultsDiv = document.getElementById("results");
+            testCases.forEach((testCase, index) => {
+                let n = testCase.keys.n;
+                let points = [];
+
+                // Decode each root and value pair
+                for (let i = 1; i <= n; i++) {
+                    let base = parseInt(testCase[i].base);
+                    let value = testCase[i].value;
+                    let decodedValue = decodeValue(value, base);
+                    points.push({ x: i, y: decodedValue });
+                }
+
+                // Extract x and y values for Lagrange interpolation
+                let xValues = points.map(point => point.x);
+                let yValues = points.map(point => point.y);
+
+                // Use Lagrange interpolation to calculate the constant term (c)
+                let constantTerm = lagrangeInterpolation(xValues, yValues);
+
+                // Display the result for the current test case
+                resultsDiv.innerHTML += `<p>Test Case ${index + 1} - Constant term (c): ${constantTerm}</p>`;
+            });
+        }
+
+        // Load the JSON file and process it
+        function loadJSONFile(fileInput) {
+            const file = fileInput.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+
+                // When the file is read, process it
+                reader.onload = function(event) {
+                    const jsonData = JSON.parse(event.target.result);
+                    processTestCases(jsonData.testCases); // Process test cases from the JSON file
+                };
+
+                reader.readAsText(file);  // Read the file as text
+            }
+        }
+    </script>
+
+    <!-- Input to select the JSON file -->
+    <input type="file" accept=".json" onchange="loadJSONFile(this)">
+</body>
+</html>
